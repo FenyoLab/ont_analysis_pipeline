@@ -17,13 +17,16 @@ if [ "$#" -ne 2 ]; then
     exit 1
 fi
 
-# This checks if the first argument does NOT start with "/data/".
 if [[ "$1" != /data/* ]]; then
     echo "ERROR: Source directory must start with '/data/' for safety."
     exit 1
 fi
 
-# Remote server details
+#---
+# Create a ssh key on BP for the device that has the stored data
+# Add this key to your ssh config and set REMOTE_SHORTCUT to the configured
+# name
+#---
 REMOTE_SHORTCUT="grid"
 
 # Directory paths
@@ -33,10 +36,8 @@ DEST_DIR_RAW="$2"
 SOURCE_DIR="${SOURCE_DIR_RAW%/}/"
 DEST_DIR="${DEST_DIR_RAW%/}/"
 
-# Name for the checksum file
 CHECKSUM_FILE="checksums.md5"
 
-# --- Script Logic ---
 
 echo "Starting the transfer process..."
 echo "Source:      ${SOURCE_DIR}"

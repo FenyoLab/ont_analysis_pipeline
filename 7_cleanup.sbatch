@@ -13,13 +13,13 @@ set -euo pipefail
 # Check if the correct number of arguments were provided.
 if [ "$#" -ne 2 ]; then
     echo "Usage: $0 <source_directory> <destination_directory>"
-    echo "Example: $0 /path/on/remote/ /path/on/hpc/"
+    echo "Example: $0 /path/on/remote/ /path/on/bp/"
     exit 1
 fi
 
 # This checks if the first argument does NOT start with "/data/".
 if [[ "$1" != /data/* ]]; then
-    echo "❌ ERROR: Source directory must start with '/data/' for safety."
+    echo "ERROR: Source directory must start with '/data/' for safety."
     exit 1
 fi
 
@@ -33,10 +33,7 @@ DEST_DIR_RAW="$2"
 SOURCE_DIR="${SOURCE_DIR_RAW%/}/"
 DEST_DIR="${DEST_DIR_RAW%/}/"
 
-# Name for the checksum file
 CHECKSUM_FILE="checksums.md5"
-
-# --- Script Logic ---
 
 echo "Step 1: Verifying file integrity on the HPC cluster..."
 cd ${DEST_DIR}
@@ -48,8 +45,6 @@ if md5sum -c --quiet ${CHECKSUM_FILE}; then
     # Step 4: Delete files on the remote server
     # -------------------------------------------
     echo "Step 2: Deleting original files from remote server: ${REMOTE_SHORTCUT}"
-    # This command finds all files (not directories) in the source and deletes them.
-    # It will also delete the checksum file if it was created there.
     # SAFETY CHECK: Ensure the variable is not empty or a dangerous root path.
     if [[ -n "${SOURCE_DIR_RAW}" && "${SOURCE_DIR_RAW}" != "/" ]]; then
         # This command deletes the entire directory provided as the first argument.
@@ -63,7 +58,7 @@ if md5sum -c --quiet ${CHECKSUM_FILE}; then
 
 else
     # If checksums do NOT match, 'md5sum -c' will exit with a non-zero code, and the script will stop.
-    echo "❌ ERROR: Verification failed! Checksum mismatch detected."
+    echo "ERROR: Verification failed! Checksum mismatch detected."
     echo "Source files on ${REMOTE_SHORTCUT} have NOT been deleted."
     exit 1 # Exit with an error code
 fi
