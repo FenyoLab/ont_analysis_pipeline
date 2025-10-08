@@ -53,29 +53,29 @@ mkdir -p "${DEST_DIR}"
 # Step 1: Generate checksums on the remote server
 # ------------------------------------------------
 echo "Step 1: Generating checksums on the remote server: ${REMOTE_SHORTCUT}"
-# ssh ${REMOTE_SHORTCUT} "cd ${SOURCE_DIR} && find . -type f -exec md5sum {} +" > ${DEST_DIR}${CHECKSUM_FILE}
+ssh ${REMOTE_SHORTCUT} "cd ${SOURCE_DIR} && find . -type f -exec md5sum {} +" > ${DEST_DIR}${CHECKSUM_FILE}
 echo "Checksum manifest created."
 
 
 # Step 2: Copy files from remote to local using rsync
 # ----------------------------------------------------
 echo "Step 2: Copying files with rsync..."
-# rsync -avP --exclude '${CHECKSUM_FILE}' ${REMOTE_SHORTCUT}:${SOURCE_DIR} ${DEST_DIR}
+rsync -avP --exclude '${CHECKSUM_FILE}' ${REMOTE_SHORTCUT}:${SOURCE_DIR} ${DEST_DIR}
 echo "rsync copy complete."
 
 cd ${DEST_DIR}
 
 
 echo "Step 3: Validating copied file checksums..."
-# if md5sum -c --quiet ${CHECKSUM_FILE}; then
-#     # If checksums match, the 'md5sum -c' command will exit with code 0 (success)
-#     echo "SUCCESS: Verification complete. All files were copied correctly."
-# else
-#     # If checksums do NOT match, 'md5sum -c' will exit with a non-zero code, and the script will stop.
-#     echo "ERROR: Verification failed! Checksum mismatch detected."
-#     echo "Source files on ${REMOTE_SHORTCUT} were not copied correctly."
-#     exit 1 # Exit with an error code
-# fi
+if md5sum -c --quiet ${CHECKSUM_FILE}; then
+    # If checksums match, the 'md5sum -c' command will exit with code 0 (success)
+    echo "SUCCESS: Verification complete. All files were copied correctly."
+else
+    # If checksums do NOT match, 'md5sum -c' will exit with a non-zero code, and the script will stop.
+    echo "ERROR: Verification failed! Checksum mismatch detected."
+    echo "Source files on ${REMOTE_SHORTCUT} were not copied correctly."
+    exit 1 # Exit with an error code
+fi
 
 #=== use the copied data to set up variables for later steps ===
 shopt -s nullglob
