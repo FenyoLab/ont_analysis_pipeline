@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #SBATCH --partition=cpu_short
 #SBATCH --job-name=bigwig
 #SBATCH --mem=32Gb
@@ -6,7 +6,12 @@
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=32
 #SBATCH --nodes=1
-#SBATCH --output=/gpfs/data/broshr01lab/logs/bigwig_%j.log
+
+set -euo pipefail
+
+source ${JOB_VARIABLES}
+
+echo "Command: $0 $@"
 
 module load python/cpu/3.10.6
 unset PYTHONPATH

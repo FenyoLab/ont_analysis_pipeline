@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #SBATCH --partition=cpu_short
 #SBATCH --job-name=demux
 #SBATCH --mem=32Gb
@@ -6,7 +6,12 @@
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=16
 #SBATCH --nodes=1
-#SBATCH --output=/gpfs/data/broshr01lab/logs/demux_%j.log
+
+set -euo pipefail
+
+source ${JOB_VARIABLES}
+
+echo "Command: $0 $@"
 
 module load dorado/1.0.0
 

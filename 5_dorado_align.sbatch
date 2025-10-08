@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #SBATCH --partition=cpu_short
 #SBATCH --job-name=align
 #SBATCH --mem=32Gb
@@ -6,13 +6,21 @@
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=32
 #SBATCH --nodes=1
-#SBATCH --output=/gpfs/data/broshr01lab/logs/align_%j.log
+
+set -euo pipefail
+
+source ${JOB_VARIABLES}
+
+echo "Command: $0 $@"
 
 module load dorado/1.0.0
 module load samtools/1.20
 
 BAM_INPUT=$1
-FA_INPUT=$2
+
+# == FROM ENV VARS FILE CREATED BY submit.sh ==
+FA_INPUT=${REFERENCE_FASTA}
+
 BAM_OUTPUT="${BAM_INPUT%.*}".aligned.bam
 SORTED_BAM_OUTPUT="${BAM_INPUT%.*}".aligned.sorted.bam
 

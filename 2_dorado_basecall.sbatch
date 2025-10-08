@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #SBATCH --partition=a100_short
 #SBATCH --job-name=basecall
 #SBATCH --mem=64Gb
@@ -6,12 +6,15 @@
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=32
 #SBATCH --nodes=1
-#SBATCH --output=/gpfs/data/broshr01lab/logs/basecall_%j.log
 #SBATCH --gres=gpu:2
 
-set -e
-
 module load dorado/1.0.0
+
+set -euo pipefail
+
+source ${JOB_VARIABLES}
+
+echo "Command: $0 $@"
 
 POD_INPUT=$1
 OUTPUT=$2
@@ -26,7 +29,7 @@ fi
 start_time=$(date +%s)
 echo "Arguments: ${POD_INPUT} ${OUTPUT}"
 echo "Job properties: ${SLURM_CPUS_PER_TASK} ${SLURM_GPUS_ON_NODE} ${SLURM_NODELIST}"
-dorado basecaller -r sup $POD_INPUT --kit-name SQK-NBD114-24 > $OUTPUT
+dorado basecaller -r --models-directory $MODELS_DIR sup $POD_INPUT --kit-name SQK-NBD114-24 > $OUTPUT
 
 
 end_time=$(date +%s)

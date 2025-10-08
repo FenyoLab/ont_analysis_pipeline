@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #SBATCH --partition=cpu_short
 #SBATCH --job-name=bigwig
 #SBATCH --mem=32Gb
@@ -6,9 +6,12 @@
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=32
 #SBATCH --nodes=1
-#SBATCH --output=/gpfs/data/broshr01lab/logs/bigwig_%j.log
 
 set -euo pipefail
+
+source ${JOB_VARIABLES}
+
+echo "Command: $0 $@"
 
 module load bedtools/2.30.0
 module load ucscutils/398
@@ -36,10 +39,13 @@ fi
 
 
 
+
 SORTED_BAM_FILE=$1
-REFERENCE=$2
-INPUT_ANNOTATION=$3
-RMSK_BED=$4
+
+# == FROM ENV VARS FILE CREATED BY submit.sh ==
+REFERENCE=${REFERENCE_FASTA}
+INPUT_ANNOTATION=${TARGETS_BED}
+RMSK_BED=${RMSK_BED}
 
 BAM_FILENAME=$(basename "$SORTED_BAM_FILE")
 REFERENCE_FILENAME=$(basename "${REFERENCE}")

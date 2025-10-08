@@ -1,12 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #SBATCH --partition=cpu_short
-#SBATCH --job-name=demux
+#SBATCH --job-name=merge
 #SBATCH --mem=16Gb
 #SBATCH --time=0-12:00:00
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
-#SBATCH --output=/gpfs/data/broshr01lab/logs/samtools_cat_%j.log
+
+set -euo pipefail
+
+source ${JOB_VARIABLES}
+
+echo "Command: $0 $@"
 
 module load samtools/1.20
 

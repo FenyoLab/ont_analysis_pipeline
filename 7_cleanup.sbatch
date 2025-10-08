@@ -6,9 +6,12 @@
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=4
-#SBATCH --output=/gpfs/data/broshr01lab/logs/cleanup_%x_%j.log
 
 set -euo pipefail
+
+source ${JOB_VARIABLES}
+
+echo "Command: $0 $@"
 
 # Check if the correct number of arguments were provided.
 if [ "$#" -ne 2 ]; then
