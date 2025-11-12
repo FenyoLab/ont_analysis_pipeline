@@ -46,8 +46,6 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-
-
 # -- Source Variables
 source ./variables.conf
 
@@ -67,52 +65,9 @@ DEMUX_DIR="${PROCESSED_DATA_DIR}/demux"
 LOGS_DIR="$PROCESSED_DATA_DIR/logs"
 LOG_OUT="${LOGS_DIR}/%j_%x.out"
 
-mkdir -p $RAW_DESTINATION
-mkdir -p $PROCESSED_DATA_DIR
-mkdir -p $LOGS_DIR
-
 JOB_VARIABLES="${PROCESSED_DATA_DIR}/pipeline_vars.env"
 
-echo "RAW_DATA=${RAW_DATA}" > $JOB_VARIABLES
-echo "PROCESSED_DATA=${PROCESSED_DATA}" >> $JOB_VARIABLES
-echo "REFERENCE_LINKS=${REFERENCE_LINKS}" >> $JOB_VARIABLES
-echo "RMSK_BED=${RMSK_BED}" >> $JOB_VARIABLES
-echo "MODELS_DIR=${MODELS_DIR}" >> $JOB_VARIABLES
-echo "RAW_DESTINATION=${RAW_DESTINATION}" >> $JOB_VARIABLES
-echo "SOURCE=${SOURCE}" >> $JOB_VARIABLES
-echo "RUN_ID=${RUN_ID}" >> $JOB_VARIABLES
-echo "REFERENCE_DIR=${REFERENCE_DIR}" >> $JOB_VARIABLES
-echo "PROCESSED_DATA_DIR=${PROCESSED_DATA_DIR}" >> $JOB_VARIABLES
-echo "PROCESSED_BAM=${PROCESSED_BAM}" >> $JOB_VARIABLES
-echo "DEMUX_DIR=${DEMUX_DIR}" >> $JOB_VARIABLES
-echo "JOB_VARIABLES=${JOB_VARIABLES}" >> $JOB_VARIABLES
-
-
-# Step 1: Copy the data
-echo "Submitting data copy job"
-job_data_copy_id=$(sbatch --parsable \
-  --output="$LOG_OUT" \
-  1_copy_from_grid.sbatch ${SOURCE} ${RAW_DESTINATION} ${JOB_VARIABLES})
-
-# cleanup_id=$(sbatch --parsable \
-#   --export=ALL,JOB_VARIABLES=$JOB_VARIABLES \
-#   --output="$LOG_OUT" \
-#   --dependency=afternotok:$job_data_copy_id \
-#   error.sbatch --step copy_failed)
-
-# Step2: Basecall with dependency
-echo "Submitting basecalling job (depends on ${job_data_copy_id})"
-job_basecall_id=$(sbatch --parsable \
-  --output="$LOG_OUT" \
-  --dependency=afterok:$job_data_copy_id \
-  2_dorado_basecall.sbatch ${RAW_DESTINATION} ${PROCESSED_BAM} ${JOB_VARIABLES})
-
-# # Step3: Demux
-echo "Submitting demux job (depends on ${job_basecall_id})"
-job_demux_id=$(sbatch --parsable \
-  --output="$LOG_OUT" \
-  --dependency=afterok:$job_basecall_id \
-  3_dorado_demux.sbatch ${PROCESSED_BAM} ${DEMUX_DIR} ${JOB_VARIABLES})
+source $JOB_VARIABLES
 
 # ---Per Sample Scripts---
 echo "Submitting Sample Scripts"
@@ -124,10 +79,9 @@ for ((i=0; i<${#BARCODES[@]}; i++)); do
   # Step4: Merge Barcodes
   SAMPLE_BAM="$PROCESSED_DATA_DIR/${SAMPLE_ID}-${SAMPLE_NAME}.bam"
   SORTED_BAM_OUTPUT="${SAMPLE_BAM%.*}".aligned.sorted.bam
-  echo "  Submitting barcode merge jobs (depends on ${job_demux_id})"
+  echo "  Submitting barcode merge jobs"
   job_merge_barcodes_id=$(sbatch --parsable \
     --output="$LOG_OUT" \
-    --dependency=afterok:$job_demux_id \
     4_samtools_merge_barcode.sbatch "${SAMPLE_BAM}" "${BARCODE}" "${DEMUX_DIR}" ${JOB_VARIABLES})
 
   # Step5: Align

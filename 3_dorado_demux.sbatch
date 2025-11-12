@@ -9,14 +9,15 @@
 
 set -euo pipefail
 
-source ${JOB_VARIABLES}
-
 echo "Command: $0 $@"
 
 module load dorado/1.0.0
 
 BAM_INPUT=$1
 OUTPUT_DIR=$2
+JOB_VARIABLES=$3
+
+source ${JOB_VARIABLES}
 
 
 

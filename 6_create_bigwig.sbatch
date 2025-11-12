@@ -9,8 +9,6 @@
 
 set -euo pipefail
 
-source ${JOB_VARIABLES}
-
 echo "Command: $0 $@"
 
 module load bedtools/2.30.0
@@ -32,7 +30,7 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
   usage
 fi
 
-if [[ $# -ne 4 ]]; then
+if [[ $# -ne 2 ]]; then
   echo "Error: incorrect number of arguments provided"
   usage
 fi
@@ -41,6 +39,10 @@ fi
 
 
 SORTED_BAM_FILE=$1
+JOB_VARIABLES="$2"
+
+source ${JOB_VARIABLES}
+
 
 # == FROM ENV VARS FILE CREATED BY submit.sh ==
 REFERENCE=${REFERENCE_FASTA}
@@ -126,7 +128,7 @@ bedtools map \
 
 echo "Step 8: Calculate mean coverage per window..."
 WINDOW_MEAN="${TMP_OUT}/${SAMPLE_ID}.window.100kb.coverage.mean.bed"
-cat $MAP_OUT | grep -v "0$" | awk '{ print $1"\t"$2"\t"$3"\t"$4/($3-$2) }' > $WINDOW_MEAN
+cat $MAP_OUT | grep -v "\s0$" | awk '{ print $1"\t"$2"\t"$3"\t"$4/($3-$2) }' > $WINDOW_MEAN
 
 echo "Step 9: Creating background bw file..."
 bedGraphToBigWig \

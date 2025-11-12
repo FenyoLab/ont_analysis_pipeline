@@ -9,15 +9,17 @@
 
 set -euo pipefail
 
-source ${JOB_VARIABLES}
-
 echo "Command: $0 $@"
 
 module load samtools/1.20
 
 SAMPLE_BAM=$1
 BARCODE=$2
+
 DEMUX_DIRECTORY=$3
+
+JOB_VARIABLES="$4"
+source ${JOB_VARIABLES}
 
 start_time=$(date +%s)
 echo "Arguments: ${SAMPLE_BAM} ${DEMUX_DIRECTORY} ${BARCODE}"

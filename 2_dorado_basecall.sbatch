@@ -2,22 +2,24 @@
 #SBATCH --partition=a100_short
 #SBATCH --job-name=basecall
 #SBATCH --mem=64Gb
-#SBATCH --time=0-12:00:00
+#SBATCH --time=3-00:00:00
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=32
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:2
+#SBATCH --gres=gpu:4
 
 module load dorado/1.0.0
 
 set -euo pipefail
 
-source ${JOB_VARIABLES}
-
 echo "Command: $0 $@"
 
 POD_INPUT=$1
 OUTPUT=$2
+JOB_VARIABLES="$3"
+
+source ${JOB_VARIABLES}
+
 OUTPUT_DIR=$(dirname "${OUTPUT}")
 
 echo "OUTPUT: ${OUTPUT}"

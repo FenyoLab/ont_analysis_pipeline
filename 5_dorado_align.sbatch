@@ -9,14 +9,15 @@
 
 set -euo pipefail
 
-source ${JOB_VARIABLES}
-
 echo "Command: $0 $@"
 
 module load dorado/1.0.0
 module load samtools/1.20
 
 BAM_INPUT=$1
+JOB_VARIABLES="$2"
+
+source ${JOB_VARIABLES}
 
 # == FROM ENV VARS FILE CREATED BY submit.sh ==
 FA_INPUT=${REFERENCE_FASTA}

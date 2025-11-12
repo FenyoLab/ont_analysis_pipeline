@@ -2,20 +2,18 @@
 #SBATCH --job-name=copy_pod5
 #SBATCH --time=12:00:00
 #SBATCH --partition=data_mover
-#SBATCH --mem=32G
+#SBATCH --mem=16G
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=4
 
 set -euo pipefail
 
-source ${JOB_VARIABLES}
-
 echo "Command: $0 $@"
 
 # Check if the correct number of arguments were provided.
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <source_directory> <destination_directory>"
+if [ "$#" -ne 3 ]; then
+    echo "Usage: $0 <source_directory> <destination_directory> <env_file>"
     echo "Example: $0 /path/on/remote/ /path/on/hpc/"
     exit 1
 fi
@@ -36,11 +34,14 @@ REMOTE_SHORTCUT="grid"
 # Process arguments to ensure they have a trailing slash
 SOURCE_DIR_RAW="$1"
 DEST_DIR_RAW="$2"
+JOB_VARIABLES="$3"
+
+source ${JOB_VARIABLES}
+
 SOURCE_DIR="${SOURCE_DIR_RAW%/}/"
 DEST_DIR="${DEST_DIR_RAW%/}/"
 
 CHECKSUM_FILE="checksums.md5"
-
 
 echo "Starting the transfer process..."
 echo "Source:      ${SOURCE_DIR}"
@@ -100,7 +101,7 @@ REFERENCE_FASTA="${FASTA_FILES[0]}"
 TARGETS_BED="${BED_FILES[0]}"
 
 filename=$(basename "$REFERENCE_FASTA")
-LINK_NAME="${filename%.*}"
+LINK_NAME="${RUN_ID}_${filename%.*}"
 
 # Check if the symbolic link already exists
 if [ ! -L "${REFERENCE_LINKS}/${LINK_NAME}" ]; then
@@ -114,7 +115,7 @@ fi
 # =============================================================
 
 
-echo "export REFERENCE_FASTA='${REFERENCE_FASTA}'" >> $JOB_VARIABLES
-echo "export TARGETS_BED='${TARGETS_BED}'" >> $JOB_VARIABLES
+echo "REFERENCE_FASTA=${REFERENCE_FASTA}" >> $JOB_VARIABLES
+echo "TARGETS_BED=${TARGETS_BED}" >> $JOB_VARIABLES
 
 echo "Process finished successfully."

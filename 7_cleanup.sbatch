@@ -9,13 +9,11 @@
 
 set -euo pipefail
 
-source ${JOB_VARIABLES}
-
 echo "Command: $0 $@"
 
 # Check if the correct number of arguments were provided.
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <source_directory> <destination_directory>"
+if [ "$#" -ne 3 ]; then
+    echo "Usage: $0 <source_directory> <destination_directory> <run variables>"
     echo "Example: $0 /path/on/remote/ /path/on/bp/"
     exit 1
 fi
@@ -33,6 +31,9 @@ REMOTE_SHORTCUT="grid"
 # Process arguments to ensure they have a trailing slash
 SOURCE_DIR_RAW="$1"
 DEST_DIR_RAW="$2"
+JOB_VARIABLES="$3"
+
+source ${JOB_VARIABLES}
 SOURCE_DIR="${SOURCE_DIR_RAW%/}/"
 DEST_DIR="${DEST_DIR_RAW%/}/"
 
