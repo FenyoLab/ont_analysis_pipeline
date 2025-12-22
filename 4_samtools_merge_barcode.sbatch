@@ -10,6 +10,7 @@
 set -euo pipefail
 
 echo "Command: $0 $@"
+echo "Job properties: ${SLURM_CPUS_PER_TASK} ${SLURM_NODELIST}"
 
 module load samtools/1.20
 
@@ -23,7 +24,7 @@ source ${JOB_VARIABLES}
 
 start_time=$(date +%s)
 echo "Arguments: ${SAMPLE_BAM} ${DEMUX_DIRECTORY} ${BARCODE}"
-echo "Job properties: ${SLURM_CPUS_PER_TASK} ${SLURM_NODELIST}"
+
 samtools cat -o "${SAMPLE_BAM}" $DEMUX_DIRECTORY/*barcode$BARCODE.bam
 
 end_time=$(date +%s)

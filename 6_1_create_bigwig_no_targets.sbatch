@@ -47,7 +47,6 @@ source ${JOB_VARIABLES}
 
 # == FROM ENV VARS FILE CREATED BY submit.sh ==
 REFERENCE=${REFERENCE_FASTA}
-INPUT_ANNOTATION=${TARGETS_BED}
 RMSK_BED=${RMSK_BED}
 
 BAM_FILENAME=$(basename "$SORTED_BAM_FILE")
@@ -102,7 +101,7 @@ echo "Step 4: Removing Adaptive target regions & rmsk regions..."
 INTERSECT_OUT="${TMP_OUT}/${SAMPLE_ID}.masked.sorted.bed"
 bedtools intersect \
   -a  $BEDGRAPH_FILE\
-  -b $RMSK_BED $INPUT_ANNOTATION \
+  -b $RMSK_BED \
   -v | sort -k1,1 -k2,2n > $INTERSECT_OUT
 
 echo "Step 5: Split intersected bed into windows..."

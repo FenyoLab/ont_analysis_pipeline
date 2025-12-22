@@ -31,13 +31,14 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
   usage
 fi
 
-if [[ $# -ne 2 ]]; then
+if [[ $# -ne 3 ]]; then
   echo "Error: incorrect number of arguments provided"
   usage
 fi
 
 SORTED_BAM_FILE=$1
-JOB_VARIABLES="$2"
+REFERENCE_FASTA=$2
+JOB_VARIABLES="$3"
 
 VCF_FILENAME="${SORTED_BAM_FILE%.aligned.sorted.bam}".vcf.gz
 
@@ -52,7 +53,9 @@ echo "Step 1: Running Sniffles..."
 
 /gpfs/data/broshr01lab/manual_scripts/ont_tools/.venv/bin/sniffles \
   --input ${SORTED_BAM_FILE} \
+  --reference ${REFERENCE_FASTA} \
   --vcf ${VCF_FILENAME} \
+  --allow-overwrite \
   -t ${SLURM_CPUS_PER_TASK}
 
 end_time=$(date +%s)
