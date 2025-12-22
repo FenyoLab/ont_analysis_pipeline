@@ -20,8 +20,6 @@ JOB_VARIABLES="$3"
 
 source ${JOB_VARIABLES}
 
-# == FROM ENV VARS FILE CREATED BY submit.sh ==
-
 BAM_OUTPUT="${BAM_INPUT%.*}".aligned.bam
 SORTED_BAM_OUTPUT="${BAM_INPUT%.*}".aligned.sorted.bam
 

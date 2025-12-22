@@ -78,44 +78,4 @@ else
     exit 1 # Exit with an error code
 fi
 
-##=== use the copied data to set up variables for later steps ===
-#shopt -s nullglob
-
-## Use an array to capture matching files
-#FASTA_FILES=("${RAW_DESTINATION}$REFERENCE_DIR"/*.fa)
-#BED_FILES=("${RAW_DESTINATION}$REFERENCE_DIR"/*.bed)
-
-## Check for exactly one fasta file
-#if [[ ${#FASTA_FILES[@]} -ne 1 ]]; then
-#  echo "Error: Found ${#FASTA_FILES[@]} fasta files in '${RAW_DESTINATION}$REFERENCE_DIR'. Exactly one is required." >&2
-#  exit 1
-#fi
-
-## Check for exactly one bed file
-#if [[ ${#BED_FILES[@]} -ne 1 ]]; then
-#  echo "Error: Found ${#BED_FILES[@]} bed files in '${RAW_DESTINATION}$REFERENCE_DIR'. Exactly one is required." >&2
-#  exit 1
-#fi
-
-#REFERENCE_FASTA="${FASTA_FILES[0]}"
-#TARGETS_BED="${BED_FILES[0]}"
-
-#filename=$(basename "$REFERENCE_FASTA")
-#LINK_NAME="${RUN_ID}_${filename%.*}"
-
-## Check if the symbolic link already exists
-#if [ ! -L "${REFERENCE_LINKS}/${LINK_NAME}" ]; then
-#    # If the link does not exist, create it
-#    ln -s "${RAW_DESTINATION}$REFERENCE_DIR" "${REFERENCE_LINKS}/${LINK_NAME}"
-#    echo "Symbolic link '$LINK_NAME' created, pointing to '${RAW_DESTINATION}$REFERENCE_DIR'."
-#else
-#    echo "Symbolic link '$LINK_NAME' already exists."
-#fi
-
-## =============================================================
-
-
-#echo "REFERENCE_FASTA=${REFERENCE_FASTA}" >> $JOB_VARIABLES
-#echo "TARGETS_BED=${TARGETS_BED}" >> $JOB_VARIABLES
-
 echo "Process finished successfully."

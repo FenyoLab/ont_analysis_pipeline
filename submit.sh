@@ -38,8 +38,6 @@ SAMPLE_NAMES=()
 REFERENCE_FASTAS=()
 
 
-
-
 # Loop through the remaining arguments and store them in the array
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -77,7 +75,6 @@ echo "MODELS_DIR:       ${MODELS_DIR}"
 
 # -- 
 YEAR=$(date +%Y)
-
 
 RMSK_BED=${ANNOTATIONS_DIR}/${SPECIES}/rmsk.sorted.bed
 echo "RMSK_BED:         ${RMSK_BED}"
