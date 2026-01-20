@@ -5,7 +5,7 @@ set -euo pipefail
 # Check if the correct number of arguments were provided.
 if [ "$#" -le 6 ]; then
     echo "Usage: $0 <source_directory> <run_id> <species mm10|hg38> [-o <barcode> <sample_id> <sample_name> <reference_fasta_path> ...]"
-    echo "Example: $0 /path/on/remote/ 202509 -o B6 ONT00001 Sample6"
+    echo "Example: $0 /path/on/remote/ 20250910 mm10 -o B6 ONT00001 Sample6 /ref"
     exit 1
 fi
 
@@ -19,7 +19,18 @@ SOURCE="$1"
 RUN_ID="$2"
 SPECIES="$3"
 
-shift 2
+shift 3
+
+# Shift the -r argument
+# TODO: [MG] in the future allow for multiple references. This will require moving
+# each sample into it's own directory with its own variables
+shift 1
+
+REFERENCE_DIR=$1
+LINK_NAME=$2
+BED_FILE=$3
+
+shift 3
 
 BARCODES=()
 SAMPLE_IDS=()
@@ -81,7 +92,7 @@ for ((i=0; i<${#BARCODES[@]}; i++)); do
   BARCODE="${BARCODES[i]}"
   SAMPLE_ID="${SAMPLE_IDS[i]}"
   SAMPLE_NAME="${SAMPLE_NAMES[i]}"
-  REFERENCE_FASTA="${REFERENCE_FASTAS[i]}"
+  REFERENCE_FASTA="${REFERENCE_LINKS}/${REFERENCE_FASTAS[i]}"
 
   # # Step4: Merge Barcodes
   SAMPLE_BAM="$PROCESSED_DATA_DIR/${SAMPLE_ID}-${SAMPLE_NAME}.bam"
