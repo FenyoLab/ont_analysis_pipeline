@@ -81,7 +81,7 @@ echo "RMSK_BED:         ${RMSK_BED}"
 
 RAW_DESTINATION="${RAW_DATA}/${YEAR}/${RUN_ID}/"
 PROCESSED_DATA_DIR=${PROCESSED_DATA}/${YEAR}/${RUN_ID}
-PROCESSED_BAM="${PROCESSED_DATA_DIR}/all_barcodes.bam"
+PROCESSED_BAM="${PROCESSED_DATA_DIR}/all_barcodes_methylation.bam"
 DEMUX_DIR="${PROCESSED_DATA_DIR}/demux"
 LOGS_DIR="$PROCESSED_DATA_DIR/logs"
 LOG_OUT="${LOGS_DIR}/%j_%x.out"
@@ -131,7 +131,7 @@ echo "Submitting basecalling job (depends on ${job_data_copy_id})"
 job_basecall_id=$(sbatch --parsable \
   --output="$LOG_OUT" \
   --dependency=afterok:$job_data_copy_id \
-  2_dorado_basecall.sbatch ${RAW_DESTINATION} ${PROCESSED_BAM} ${JOB_VARIABLES})
+  2_1_dorado_basecall_methylation.sbatch ${RAW_DESTINATION} ${JOB_VARIABLES})
 
 # Step3: Demux
 echo "Submitting demux job (depends on ${job_basecall_id})"
