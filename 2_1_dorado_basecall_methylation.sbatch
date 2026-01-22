@@ -22,7 +22,7 @@ source ${JOB_VARIABLES}
 start_time=$(date +%s)
 echo "Arguments: ${POD_INPUT}"
 echo "Job properties: ${SLURM_CPUS_PER_TASK} ${SLURM_GPUS_ON_NODE} ${SLURM_NODELIST}"
-dorado basecaller -r --models-directory $MODELS_DIR sup,5mCG_5hmCG $POD_INPUT > $PROCESSED_METHYLATION_BAM
+dorado basecaller -r --models-directory $MODELS_DIR sup,5mCG_5hmCG $POD_INPUT --kit-name SQK-NBD114-24 > $PROCESSED_BAM
 
 
 end_time=$(date +%s)

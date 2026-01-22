@@ -126,6 +126,7 @@ job_data_copy_id=$(sbatch --parsable \
 #   --dependency=afternotok:$job_data_copy_id \
 #   error.sbatch --step copy_failed)
 
+
 # Step2: Basecall with dependency
 echo "Submitting basecalling job (depends on ${job_data_copy_id})"
 job_basecall_id=$(sbatch --parsable \
@@ -177,11 +178,19 @@ for ((i=0; i<${#BARCODES[@]}; i++)); do
     6_create_bigwig.sbatch \
     ${SORTED_BAM_OUTPUT} ${REFERENCE_FASTA} ${JOB_VARIABLES})
 
-  echo "  Submitting SV calling job (depends on ${job_coverage_id})"
+  echo "  Submitting SV calling job (depends on ${job_align_id})"
   job_coverage_id=$(sbatch --parsable \
     --output="$LOG_OUT" \
-    --dependency=afterok:$job_coverage_id \
+    --dependency=afterok:$job_align_id \
     --nodelist=cn-0005,cn-0021,cn-0034 \
     9_structural_variant_calling.sbatch \
     ${SORTED_BAM_OUTPUT} ${REFERENCE_FASTA} ${JOB_VARIABLES})
+
+  echo "  Submitting Methylation analysis job (depends on ${job_align_id})"
+  job_methylation_id=$(sbatch --parsable \
+    --output="$LOG_OUT" \
+    --dependency=afterok:$job_align_id \
+    10_methylation.sbatch \
+    ${SORTED_BAM_OUTPUT} ${REFERENCE_FASTA} ${JOB_VARIABLES})
+
 done
