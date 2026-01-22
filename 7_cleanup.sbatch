@@ -42,7 +42,7 @@ CHECKSUM_FILE="checksums.md5"
 echo "Step 1: Verifying file integrity on the HPC cluster..."
 cd ${DEST_DIR}
 
-if md5sum -c --quiet ${CHECKSUM_FILE}; then
+if md5sum -c ${CHECKSUM_FILE}; then
     # If checksums match, the 'md5sum -c' command will exit with code 0 (success)
     echo "SUCCESS: Verification complete. All files were copied correctly."
 
