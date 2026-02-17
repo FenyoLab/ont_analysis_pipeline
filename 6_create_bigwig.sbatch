@@ -13,7 +13,7 @@ echo "Command: $0 $@"
 
 module load bedtools/2.30.0
 module load ucscutils/398
-module load samtools/1.20
+module load samtools
 
 usage() {
   echo "Usage: $0 <sorted_bam_file> <fasta_reference> <adaptive_targets> <rmsk bed>"
@@ -91,51 +91,54 @@ bedtools genomecov -ibam "$SORTED_BAM_FILE" -bg > "$BEDGRAPH_FILE"
 echo "Step 2: Converting bedGraph to bigWig..."
 bedGraphToBigWig "$BEDGRAPH_FILE" "$CHROM_SIZES" "$BIGWIG_FILE"
 
-echo "Step 3: Creating chromosome windows..."
-WINDOW_FILE="${TMP_OUT}/${REFERENCE_NAME}.windows.100kb.sort.bed"
-bedtools makewindows \
-  -g $CHROM_SIZES \
-  -w 100000 -s 100000 \
-  | sort -k1,1 -k2,2n > $WINDOW_FILE
+if [[ "$SPECIES" == "mm10" ]] || [[ "$SPECIES" == "hg38" ]]; then
+  echo "Step 3: Creating chromosome windows..."
+  WINDOW_FILE="${TMP_OUT}/${REFERENCE_NAME}.windows.100kb.sort.bed"
+  bedtools makewindows \
+    -g $CHROM_SIZES \
+    -w 100000 -s 100000 \
+    | sort -k1,1 -k2,2n > $WINDOW_FILE
 
-echo "Step 4: Removing Adaptive target regions & rmsk regions..."
-INTERSECT_OUT="${TMP_OUT}/${SAMPLE_ID}.masked.sorted.bed"
-bedtools intersect \
-  -a  $BEDGRAPH_FILE\
-  -b $RMSK_BED $INPUT_ANNOTATION \
-  -v | sort -k1,1 -k2,2n > $INTERSECT_OUT
+  echo "Step 4: Removing Adaptive target regions & rmsk regions..."
+  INTERSECT_OUT="${TMP_OUT}/${SAMPLE_ID}.masked.sorted.bed"
+  bedtools intersect \
+    -a  $BEDGRAPH_FILE\
+    -b $RMSK_BED $INPUT_ANNOTATION \
+    -v | sort -k1,1 -k2,2n > $INTERSECT_OUT
 
-echo "Step 5: Split intersected bed into windows..."
-SPLIT_WINDOWS="${TMP_OUT}/${SAMPLE_ID}.masked.100kb_binned.bed"
-bedtools intersect \
-  -a $WINDOW_FILE \
-  -b $INTERSECT_OUT \
-  -sorted \
-  -wb -sortout > $SPLIT_WINDOWS
+  echo "Step 5: Split intersected bed into windows..."
+  SPLIT_WINDOWS="${TMP_OUT}/${SAMPLE_ID}.masked.100kb_binned.bed"
+  bedtools intersect \
+    -a $WINDOW_FILE \
+    -b $INTERSECT_OUT \
+    -sorted \
+    -wb -sortout > $SPLIT_WINDOWS
 
-echo "Step 6: Calculating per base depth..."
-PER_BASE_DEPTH_OUT="${TMP_OUT}/${SAMPLE_ID}.masked.per_base_depth.bed"
-cat $SPLIT_WINDOWS | cut -f1-3,7 | awk '{print $1"\t"$2"\t"$3"\t"($3-$2)*$4}' > $PER_BASE_DEPTH_OUT
+  echo "Step 6: Calculating per base depth..."
+  PER_BASE_DEPTH_OUT="${TMP_OUT}/${SAMPLE_ID}.masked.per_base_depth.bed"
+  cat $SPLIT_WINDOWS | cut -f1-3,7 | awk '{print $1"\t"$2"\t"$3"\t"($3-$2)*$4}' > $PER_BASE_DEPTH_OUT
 
-echo "Step 7: Calculate total per base depth per window..."
-# MAP_OUT="ONT00005-mES_JB5_hTBXT_Scarless_clHLA296.bg.masked.per_base_depth.windowed.bed"
-MAP_OUT="${TMP_OUT}/${SAMPLE_ID}.masked.per_base_depth.windowed.bed"
-bedtools map \
-  -b $PER_BASE_DEPTH_OUT \
-  -a $WINDOW_FILE \
-  -c 4 \
-  -o sum \
-  -null 0 > $MAP_OUT
+  echo "Step 7: Calculate total per base depth per window..."
+  MAP_OUT="${TMP_OUT}/${SAMPLE_ID}.masked.per_base_depth.windowed.bed"
+  bedtools map \
+    -b $PER_BASE_DEPTH_OUT \
+    -a $WINDOW_FILE \
+    -c 4 \
+    -o sum \
+    -null 0 > $MAP_OUT
 
-echo "Step 8: Calculate mean coverage per window..."
-WINDOW_MEAN="${TMP_OUT}/${SAMPLE_ID}.window.100kb.coverage.mean.bed"
-cat $MAP_OUT | grep -v "\s0$" | awk '{ print $1"\t"$2"\t"$3"\t"$4/($3-$2) }' > $WINDOW_MEAN
+  echo "Step 8: Calculate mean coverage per window..."
+  WINDOW_MEAN="${TMP_OUT}/${SAMPLE_ID}.window.100kb.coverage.mean.bed"
+  cat $MAP_OUT | grep -v "\s0$" | awk '{ print $1"\t"$2"\t"$3"\t"$4/($3-$2) }' > $WINDOW_MEAN
 
-echo "Step 9: Creating background bw file..."
-bedGraphToBigWig \
-  $WINDOW_MEAN \
-  $CHROM_SIZES \
-  $BG_BIGWIG_FILE
+  echo "Step 9: Creating background bw file..."
+  bedGraphToBigWig \
+    $WINDOW_MEAN \
+    $CHROM_SIZES \
+    $BG_BIGWIG_FILE
+else
+  echo "Skipping background generation (Species=$SPECIES)"
+fi
 
 end_time=$(date +%s)
 execution_time_minutes=$((end_time-start_time))
