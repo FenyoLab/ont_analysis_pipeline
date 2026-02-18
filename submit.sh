@@ -105,6 +105,7 @@ echo "PROCESSED_BAM=${PROCESSED_BAM}" >> $JOB_VARIABLES
 echo "DEMUX_DIR=${DEMUX_DIR}" >> $JOB_VARIABLES
 echo "JOB_VARIABLES=${JOB_VARIABLES}" >> $JOB_VARIABLES
 echo "TARGETS_BED=${REFERENCE_LINKS}/${LINK_NAME}/${BED_FILE}" >> $JOB_VARIABLES
+echo "SPECIES=${SPECIES}" >> $JOB_VARIABLES
 
 
 if [ ! -L "${REFERENCE_LINKS}/${LINK_NAME}" ]; then
@@ -192,5 +193,7 @@ for ((i=0; i<${#BARCODES[@]}; i++)); do
     --dependency=afterok:$job_align_id \
     10_methylation.sbatch \
     ${SORTED_BAM_OUTPUT} ${REFERENCE_FASTA} ${JOB_VARIABLES})
-
 done
+
+# TODO:[MG] Add a step to generate figures
+# TODO:[MG] Add a step to update species JSON file and generate registry automatically
