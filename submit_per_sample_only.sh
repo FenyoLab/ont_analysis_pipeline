@@ -97,51 +97,39 @@ for ((i=0; i<${#BARCODES[@]}; i++)); do
   # # Step4: Merge Barcodes
   SAMPLE_BAM="$PROCESSED_DATA_DIR/${SAMPLE_ID}-${SAMPLE_NAME}.bam"
   SORTED_BAM_OUTPUT="${SAMPLE_BAM%.*}".aligned.sorted.bam
-  # echo "  Submitting barcode merge jobs"
-  # job_merge_barcodes_id=$(sbatch --parsable \
-  #   --output="$LOG_OUT" \
-  #   --nodelist=cn-0005,cn-0021,cn-0034 \
-  #   4_samtools_merge_barcode.sbatch "${SAMPLE_BAM}" "${BARCODE}" "${DEMUX_DIR}" ${JOB_VARIABLES})
-
-  # # Step5: Align
-  # echo "  Submitting alignment job (depends on ${job_merge_barcodes_id})"
-  # job_align_id=$(sbatch --parsable \
-  #   --output="$LOG_OUT" \
-  #   --nodelist=cn-0005,cn-0021,cn-0034 \
-  #   --dependency=afterok:$job_merge_barcodes_id \
-  #   5_dorado_align.sbatch ${SAMPLE_BAM} ${REFERENCE_FASTA} ${JOB_VARIABLES})
+  echo "  Submitting barcode merge jobs"
+  job_merge_barcodes_id=$(sbatch --parsable \
+    --output="$LOG_OUT" \
+    4_samtools_merge_barcode.sbatch "${SAMPLE_BAM}" "${BARCODE}" "${DEMUX_DIR}" ${JOB_VARIABLES})
 
   # Step5: Align
-  echo "  Submitting alignment job"
+  echo "  Submitting alignment job (depends on ${job_merge_barcodes_id})"
   job_align_id=$(sbatch --parsable \
     --output="$LOG_OUT" \
-    --nodelist=cn-0005,cn-0021,cn-0034 \
-    5_dorado_align.sbatch \
-    ${SAMPLE_BAM} ${REFERENCE_FASTA} ${JOB_VARIABLES})
+    --dependency=afterok:$job_merge_barcodes_id \
+    5_dorado_align.sbatch ${SAMPLE_BAM} ${REFERENCE_FASTA} ${JOB_VARIABLES})
   
   # Step6: Generate coverage maps
-  echo "  Submitting bigwig job (depends on ${job_align_id})"
+  echo "  Submitting bed job (depends on ${job_align_id})"
   job_coverage_id=$(sbatch --parsable \
     --output="$LOG_OUT" \
-    --nodelist=cn-0005,cn-0021,cn-0034 \
     --dependency=afterok:$job_align_id \
     6_create_bigwig.sbatch \
     ${SORTED_BAM_OUTPUT} ${REFERENCE_FASTA} ${JOB_VARIABLES})
 
-  # # Step6: Generate coverage maps
-  # echo "  Submitting bigwig job"
-  # job_coverage_id=$(sbatch --parsable \
-  #   --output="$LOG_OUT" \
-  #   --nodelist=cn-0005,cn-0021,cn-0034 \
-  #   6_create_bigwig.sbatch \
-  #   ${SORTED_BAM_OUTPUT} ${REFERENCE_FASTA} ${JOB_VARIABLES})
 
-  echo "  Submitting SV calling job (depends on ${job_coverage_id})"
+  echo "  Submitting SV calling job (depends on ${job_align_id})"
   job_coverage_id=$(sbatch --parsable \
     --output="$LOG_OUT" \
-    --nodelist=cn-0005,cn-0021,cn-0034 \
-    --dependency=afterok:$job_coverage_id \
+    --dependency=afterok:$job_align_id \
     9_structural_variant_calling.sbatch \
+    ${SORTED_BAM_OUTPUT} ${REFERENCE_FASTA} ${JOB_VARIABLES})
+
+  echo "  Submitting Methylation analysis job (depends on ${job_align_id})"
+  job_methylation_id=$(sbatch --parsable \
+    --output="$LOG_OUT" \
+    --dependency=afterok:$job_align_id \
+    10_methylation.sbatch \
     ${SORTED_BAM_OUTPUT} ${REFERENCE_FASTA} ${JOB_VARIABLES})
 done
 

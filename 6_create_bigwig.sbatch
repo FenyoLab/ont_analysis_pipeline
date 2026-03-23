@@ -86,7 +86,10 @@ echo "Arguments: ${SORTED_BAM_FILE} ${BEDGRAPH_FILE} ${BIGWIG_FILE} ${CHROM_SIZE
 echo "Job properties: ${SLURM_CPUS_PER_TASK} ${SLURM_NODELIST}"
 # Step 4: BedGraph and BigWig
 echo "Step 1: Generating bedGraph..."
-bedtools genomecov -ibam "$SORTED_BAM_FILE" -bg > "$BEDGRAPH_FILE"
+RAW_BEDGRAPH_FILE="${TMP_OUT}/${REFERENCE_NAME}.tmp.bed"
+bedtools genomecov -ibam "$SORTED_BAM_FILE" -bg > "$RAW_BEDGRAPH_FILE"
+
+bedClip -truncate -verbose=2 $RAW_BEDGRAPH_FILE $CHROM_SIZES $BEDGRAPH_FILE
 
 echo "Step 2: Converting bedGraph to bigWig..."
 bedGraphToBigWig "$BEDGRAPH_FILE" "$CHROM_SIZES" "$BIGWIG_FILE"
