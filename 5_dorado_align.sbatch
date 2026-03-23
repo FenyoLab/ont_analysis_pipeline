@@ -12,7 +12,7 @@ set -euo pipefail
 echo "Command: $0 $@"
 
 module load dorado/1.0.0
-module load samtools/1.20
+module load samtools
 
 BAM_INPUT=$1
 REFERENCE_FASTA=$2

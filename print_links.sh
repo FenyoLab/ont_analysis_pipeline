@@ -7,7 +7,7 @@ echo "---BAI Links---"
 find $RUN_DIR -type f -name "*.aligned.sorted.bam.bai" | sort | sed 's/^.*processed_data/https:\/\/ont:longreads@cascade.isg.med.nyu.edu\/broshr01lab\/data/g'
 
 echo "---Coverage Links---"
-find $RUN_DIR -type f -name "*.bw" -not -name "*.mean.bw" | sort | sed 's/^.*processed_data/https:\/\/ont:longreads@cascade.isg.med.nyu.edu\/broshr01lab\/data/g'
+find $RUN_DIR -type f -not -name "*.mod.bw" -name "*.bw" -not -name "*.mean.bw" | sort | sed 's/^.*processed_data/https:\/\/ont:longreads@cascade.isg.med.nyu.edu\/broshr01lab\/data/g'
 
 echo "---Smoothed Coverage Links---"
 find $RUN_DIR -type f -name "*.mean.bw" | sort | sed 's/^.*processed_data/https:\/\/ont:longreads@cascade.isg.med.nyu.edu\/broshr01lab\/data/g'
