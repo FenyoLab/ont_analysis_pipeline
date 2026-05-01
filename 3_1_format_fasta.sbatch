@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #SBATCH --partition=cpu_short
-#SBATCH --job-name=demux
+#SBATCH --job-name=fasta
 #SBATCH --mem=32Gb
 #SBATCH --time=0-12:00:00
 #SBATCH --tasks-per-node=1
@@ -35,22 +35,20 @@ echo "Arguments: ${FASTA_INPUT}"
 echo "Job properties: ${SLURM_CPUS_PER_TASK} ${SLURM_NODELIST}"
 
 # If there is not a backup, make one
-if [[ ! -f "$OG_FASTA" && ! -f $OG_FASTA_XZ ]]; then
+if [[ ! -f $OG_FASTA_XZ ]]; then
   echo "Backing up to ${OG_FASTA}"
   mv $REFERENCE $OG_FASTA
-fi
 
-echo "Formatting fasta"
-seqkit sort -j $SLURM_CPUS_PER_TASK --natural-order $OG_FASTA | seqkit seq -j $SLURM_CPUS_PER_TASK -w 80 > $REFERENCE
-
-
-echo "Generating chromosome sizes file..."
-samtools faidx "$REFERENCE"
-cut -f1,2 "${REFERENCE}.fai" > "$CHROM_SIZES"
+  echo "Formatting fasta"
+  seqkit sort -j $SLURM_CPUS_PER_TASK --natural-order $OG_FASTA | seqkit seq -j $SLURM_CPUS_PER_TASK -w 80 > $REFERENCE
 
 
-# Compress the original if there is not already a compressed version
-if [[! -f $OG_FASTA_XZ ]]; then
+  echo "Generating chromosome sizes file..."
+  samtools faidx "$REFERENCE"
+  cut -f1,2 "${REFERENCE}.fai" > "$CHROM_SIZES"
+
+
+  # Compress the original if there is not already a compressed version
   echo "Compressing ${OG_FASTA}"
   xz -T $SLURM_CPUS_PER_TASK ${OG_FASTA}
 fi

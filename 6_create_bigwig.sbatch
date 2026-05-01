@@ -13,7 +13,7 @@ echo "Command: $0 $@"
 
 module load bedtools/2.30.0
 module load ucscutils/398
-module load samtools
+module load samtools/1.14
 
 usage() {
   echo "Usage: $0 <sorted_bam_file> <fasta_reference> <adaptive_targets> <rmsk bed>"

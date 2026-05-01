@@ -143,6 +143,22 @@ job_demux_id=$(sbatch --parsable \
   --nodelist=cn-0005,cn-0021,cn-0034 \
   3_dorado_demux.sbatch ${PROCESSED_BAM} ${DEMUX_DIR} ${JOB_VARIABLES})
 
+# Step3_1: process fasta
+FASTA_JOB_IDS=()
+shopt -s nullglob
+for f in ${REFERENCE_LINKS}/${LINK_NAME}/*.fa; do
+  echo "Submitting fasta-preprocessing job (depends on ${job_demux_id})"
+  job_fasta_id=$(sbatch --parsable \
+    --output="$LOG_OUT" \
+    --dependency=afterok:$job_demux_id \
+    3_dorado_demux.sbatch ${f} ${JOB_VARIABLES})
+    # Perform actions on "$f"
+    FASTA_JOB_IDS+=($job_fasta_id)
+done
+shopt -u nullglob
+FASTA_DEPENDENCIES=$(IFS=,; echo "${FASTA_JOB_IDS[*]}")
+
+
 # ---Per Sample Scripts---
 echo "Submitting Sample Scripts"
 for ((i=0; i<${#BARCODES[@]}; i++)); do
@@ -154,11 +170,10 @@ for ((i=0; i<${#BARCODES[@]}; i++)); do
   # Step4: Merge Barcodes
   SAMPLE_BAM="$PROCESSED_DATA_DIR/${SAMPLE_ID}-${SAMPLE_NAME}.bam"
   SORTED_BAM_OUTPUT="${SAMPLE_BAM%.*}".aligned.sorted.bam
-  echo "  Submitting barcode merge jobs (depends on ${job_demux_id})"
+  echo "  Submitting barcode merge jobs (depends on ${FASTA_DEPENDENCIES})"
   job_merge_barcodes_id=$(sbatch --parsable \
     --output="$LOG_OUT" \
-    --dependency=afterok:$job_demux_id \
-    --nodelist=cn-0005,cn-0021,cn-0034 \
+    --dependency=afterok:$FASTA_DEPENDENCIES \
     4_samtools_merge_barcode.sbatch "${SAMPLE_BAM}" "${BARCODE}" "${DEMUX_DIR}" ${JOB_VARIABLES})
 
   # Step5: Align
@@ -166,7 +181,6 @@ for ((i=0; i<${#BARCODES[@]}; i++)); do
   job_align_id=$(sbatch --parsable \
     --output="$LOG_OUT" \
     --dependency=afterok:$job_merge_barcodes_id \
-    --nodelist=cn-0005,cn-0021,cn-0034 \
     5_dorado_align.sbatch \
     ${SAMPLE_BAM} ${REFERENCE_FASTA} ${JOB_VARIABLES})
 
@@ -175,7 +189,6 @@ for ((i=0; i<${#BARCODES[@]}; i++)); do
   job_coverage_id=$(sbatch --parsable \
     --output="$LOG_OUT" \
     --dependency=afterok:$job_align_id \
-    --nodelist=cn-0005,cn-0021,cn-0034 \
     6_create_bigwig.sbatch \
     ${SORTED_BAM_OUTPUT} ${REFERENCE_FASTA} ${JOB_VARIABLES})
 
@@ -183,7 +196,6 @@ for ((i=0; i<${#BARCODES[@]}; i++)); do
   job_coverage_id=$(sbatch --parsable \
     --output="$LOG_OUT" \
     --dependency=afterok:$job_align_id \
-    --nodelist=cn-0005,cn-0021,cn-0034 \
     9_structural_variant_calling.sbatch \
     ${SORTED_BAM_OUTPUT} ${REFERENCE_FASTA} ${JOB_VARIABLES})
 

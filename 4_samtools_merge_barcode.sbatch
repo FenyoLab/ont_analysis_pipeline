@@ -12,7 +12,7 @@ set -euo pipefail
 echo "Command: $0 $@"
 echo "Job properties: ${SLURM_CPUS_PER_TASK} ${SLURM_NODELIST}"
 
-module load samtools
+module load samtools/1.14
 
 SAMPLE_BAM=$1
 BARCODE=$2
