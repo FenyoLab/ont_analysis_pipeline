@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 #SBATCH --partition=cpu_short
 #SBATCH --job-name=align
-#SBATCH --mem=32Gb
+#SBATCH --mem=48Gb
 #SBATCH --time=0-12:00:00
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=32
 #SBATCH --nodes=1
+#SBATCH --mail-type=FAIL      # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=mark.grivainis@nyulangone.org     # Where to send mail
 
 set -euo pipefail
 

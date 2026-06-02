@@ -6,6 +6,8 @@
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=4
+#SBATCH --mail-type=FAIL      # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=mark.grivainis@nyulangone.org     # Where to send mail
 
 set -euo pipefail
 

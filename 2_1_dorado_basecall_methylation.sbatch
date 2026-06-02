@@ -7,6 +7,8 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:4
+#SBATCH --mail-type=FAIL      # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=mark.grivainis@nyulangone.org     # Where to send mail
 
 module load dorado/1.2.0
 

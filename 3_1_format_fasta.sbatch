@@ -6,6 +6,8 @@
 #SBATCH --tasks-per-node=1
 #SBATCH --cpus-per-task=16
 #SBATCH --nodes=1
+#SBATCH --mail-type=FAIL      # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-user=mark.grivainis@nyulangone.org     # Where to send mail
 
 # This script should prepare the fasta file for downstream steps
 #   1. Make a backup of the original
