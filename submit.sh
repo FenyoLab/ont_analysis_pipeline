@@ -144,20 +144,11 @@ job_demux_id=$(sbatch --parsable \
   3_dorado_demux.sbatch ${PROCESSED_BAM} ${DEMUX_DIR} ${JOB_VARIABLES})
 
 # Step3_1: process fasta
-FASTA_JOB_IDS=()
-shopt -s nullglob
-for f in ${REFERENCE_LINKS}/${LINK_NAME}/*.fa; do
-  echo "Submitting fasta-preprocessing job (depends on ${job_demux_id})"
-  job_fasta_id=$(sbatch --parsable \
-    --output="$LOG_OUT" \
-    --dependency=afterok:$job_demux_id \
-    3_dorado_demux.sbatch ${f} ${JOB_VARIABLES})
-    # Perform actions on "$f"
-    FASTA_JOB_IDS+=($job_fasta_id)
-done
-shopt -u nullglob
-FASTA_DEPENDENCIES=$(IFS=,; echo "${FASTA_JOB_IDS[*]}")
-
+echo "Submitting fasta-preprocessing job (depends on ${job_demux_id})"
+job_fasta_id=$(sbatch --parsable \
+  --output="$LOG_OUT" \
+  --dependency=afterok:$job_demux_id \
+  3_1_format_fasta.sbatch "${REFERENCE_LINKS}/${REFERENCE_FASTAS[0]}" ${JOB_VARIABLES})
 
 # ---Per Sample Scripts---
 echo "Submitting Sample Scripts"
@@ -170,10 +161,10 @@ for ((i=0; i<${#BARCODES[@]}; i++)); do
   # Step4: Merge Barcodes
   SAMPLE_BAM="$PROCESSED_DATA_DIR/${SAMPLE_ID}-${SAMPLE_NAME}.bam"
   SORTED_BAM_OUTPUT="${SAMPLE_BAM%.*}".aligned.sorted.bam
-  echo "  Submitting barcode merge jobs (depends on ${FASTA_DEPENDENCIES})"
+  echo "  Submitting barcode merge jobs (depends on ${job_fasta_id})"
   job_merge_barcodes_id=$(sbatch --parsable \
     --output="$LOG_OUT" \
-    --dependency=afterok:$FASTA_DEPENDENCIES \
+    --dependency=afterok:$job_fasta_id \
     4_samtools_merge_barcode.sbatch "${SAMPLE_BAM}" "${BARCODE}" "${DEMUX_DIR}" ${JOB_VARIABLES})
 
   # Step5: Align
