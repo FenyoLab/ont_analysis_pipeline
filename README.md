@@ -17,21 +17,6 @@ A lightweight SLURM-based pipeline of shell scripts for Oxford Nanopore Technolo
 - Standard bioinformatics tools: samtools, minimap2, bedtools, deeptools (for bigWig), and any structural variant callers used in your environment.
 - Bash (>=4), basic GNU coreutils, and any site-specific modules loaded on the cluster.
 
-## Repository layout
-
-- 1_copy_from_grid.sbatch - step for copying raw data from grid storage
-- 2_dorado_basecall.sbatch - basecalling (Dorado)
-- 3_dorado_demux.sbatch - demultiplexing
-- 4_samtools_merge_barcode.sbatch - merge per-barcode BAMs
-- 5_dorado_align.sbatch - alignment (e.g. minimap2)
-- 6_create_bigwig.sbatch - create bigWig coverage tracks
-- 6_1_create_bigwig_no_targets.sbatch - variant of bigWig creation
-- 7_cleanup.sbatch - cleanup temporary files
-- 8_build_registry.sbatch - build summary/registry of runs
-- 9_structural_variant_calling.sbatch - structural variant calling step
-- submit.sh, submit_first_steps.sh, submit_per_sample_only.sh - convenience wrappers
-- print_links.sh, dm_test.sbatch, error.sbatch - helpers and test scripts
-
 ## Configuration and inputs
 
 - The scripts assume a directory layout and data locations set by environment variables or by editing the top of each sbatch script.
@@ -57,7 +42,8 @@ A lightweight SLURM-based pipeline of shell scripts for Oxford Nanopore Technolo
    # Per species annotations such as repeat masker and ncbi gene tracks
    ANNOTATIONS_DIR=/path/to/annotations_dir
    ```
-3. Run the pipeline from the repository root:
+3. Update the mail-user email address to an appropriate one
+4. Run the pipeline from the repository root:
    - To submit the whole pipeline in order, use: ./submit.sh
 
    ```
@@ -85,7 +71,7 @@ A lightweight SLURM-based pipeline of shell scripts for Oxford Nanopore Technolo
    - To run initial steps only: ./submit_first_steps.sh
    - To submit per-sample processing: ./submit_per_sample_only.sh
 
-4. Monitor SLURM jobs with squeue and check produced logs in the working directories.
+5. Monitor SLURM jobs with squeue and check produced logs in the working directories.
 
 ## Outputs
 
