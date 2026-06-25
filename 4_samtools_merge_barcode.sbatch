@@ -14,18 +14,24 @@ echo "Job properties: ${SLURM_CPUS_PER_TASK} ${SLURM_NODELIST}"
 
 module load samtools/1.14
 
-SAMPLE_BAM=$1
-BARCODE=$2
+SKIP_BARCODES=$1
+SAMPLE_BAM=$2
+BARCODE=$3
 
-DEMUX_DIRECTORY=$3
+DEMUX_DIRECTORY=$4
 
-JOB_VARIABLES="$4"
+JOB_VARIABLES="$5"
 source ${JOB_VARIABLES}
 
 start_time=$(date +%s)
 echo "Arguments: ${SAMPLE_BAM} ${DEMUX_DIRECTORY} ${BARCODE}"
 
-samtools cat -o "${SAMPLE_BAM}" $DEMUX_DIRECTORY/*barcode$BARCODE.bam
+if [ "$SKIP_BARCODES" -eq 1 ]; then
+  cp $BASECALLED_BAM $SAMPLE_BAM
+else
+  samtools cat -o "${SAMPLE_BAM}" $DEMUX_DIRECTORY/*barcode$BARCODE.bam
+fi
+
 
 end_time=$(date +%s)
 execution_time_minutes=$((end_time-start_time))
