@@ -64,6 +64,7 @@ def setup_env(
     grid_path: str,
     reference: tuple[tuple[str, str, str]],
     sample: tuple[tuple[str, str, str, str]],
+    methylation: str | None,
 ):
 
     env.read_env("variables.conf")
@@ -94,6 +95,10 @@ def setup_env(
     env_variables["REMOTE_DIR"] = grid_path
     env_variables["RUN_ID"] = run_id
     env_variables["SPECIES"] = species
+    bc_model = "sup"
+    if methylation:
+        bc_model += f",{methylation}"
+    env_variables["BC_MODEL"] = bc_model
 
     job_variables = processed_data_dir / "pipeline_vars.env"
     env_variables["JOB_VARIABLES"] = job_variables
@@ -126,7 +131,10 @@ def setup_env(
             click.echo(
                 f"Symlink exists: {raw_destination / reference_dir} -> {reference_links / reference_base}"
             )
-
+        elif (reference_links / reference_base).exists():
+            click.echo(
+                f"Directory exists: {raw_destination / reference_dir} -> {reference_links / reference_base}"
+            )
         else:
             (reference_links / reference_base).symlink_to(
                 raw_destination / reference_dir
@@ -142,11 +150,22 @@ def setup_env(
     return env_variables
 
 
-def submit_job(log_out: str, script, args: str, dependency_id: int | None = None):
+def submit_job(
+    log_out: str,
+    script,
+    args: str,
+    dependency_id: int | None = None,
+    ignore_node: str | None = None,
+    node_list: str | None = "cl40s-[8001-8008,8012-8013]",
+):
     # Construct the sbatch command
     options = f"--parsable --output={log_out}"
     if dependency_id is not None:
         options += f" --dependency=afterok:{dependency_id}"
+    if ignore_node is not None:
+        options += f" --exclude={ignore_node}"
+    if node_list is not None:
+        options += f" --nodelist={node_list}"
 
     sbatch_cmd = f"sbatch {options} {script} {args}"
     # Execute and capture output
@@ -173,10 +192,11 @@ def run_pipeline(
             log_out,
             "1_copy_from_grid.sbatch",
             f"{env_variables['REMOTE_DIR']} {env_variables['RAW_DESTINATION']} {env_variables['JOB_VARIABLES']}",
+            node_list=None,
         )
     else:
         job_id = None
-        click.echo("\t [X] Skippnig copy step")
+        click.echo("\t [X] Skipping copy step")
 
     # # BASECALL
     if not pipeline_config.skip_basecall:
@@ -186,6 +206,8 @@ def run_pipeline(
             "2_1_dorado_basecall_methylation.sbatch",
             f"{env_variables['RAW_DESTINATION']} {skip_barcodes} {env_variables['JOB_VARIABLES']}",
             dependency_id=job_id,
+            ignore_node="a100-4007,a100-4015,a100-4021,a100-4028,a100-4033",
+            node_list=None,
         )
     else:
         click.echo("\t [X] Skipping basecalling job")
@@ -227,7 +249,7 @@ def run_pipeline(
         #     # MERGE BARCODES
         if not pipeline_config.skip_merge:
             click.echo(f"\t\t [ ] Submitting merge job (depends on {job_id})")
-            job_id = submit_job(
+            per_sample_job_id = submit_job(
                 log_out,
                 "4_samtools_merge_barcode.sbatch",
                 f"{skip_barcodes} {sample_bam} {barcode} {env_variables['DEMUX_DIR']} {env_variables['JOB_VARIABLES']}",
@@ -238,12 +260,14 @@ def run_pipeline(
 
         #     # ALIGN
         if not pipeline_config.skip_align:
-            click.echo(f"\t\t [ ] Submitting align job (depends on {job_id})")
+            click.echo(
+                f"\t\t [ ] Submitting align job (depends on {per_sample_job_id})"
+            )
             job_id_align = submit_job(
                 log_out,
                 "5_dorado_align.sbatch",
                 f"{sample_bam} {reference_fasta} {env_variables['JOB_VARIABLES']}",
-                dependency_id=job_id,
+                dependency_id=per_sample_job_id,
             )
         else:
             click.echo("\t\t [X] Skipping align job")
@@ -251,8 +275,8 @@ def run_pipeline(
 
         #     # GENERATE COVERAGE
         if not pipeline_config.skip_bed:
-            click.echo(f"\t\t [ ] Submitting bed job (depends on {job_id})")
-            job_id = submit_job(
+            click.echo(f"\t\t [ ] Submitting bed job (depends on {job_id_align})")
+            per_sample_job_id = submit_job(
                 log_out,
                 "6_create_bigwig.sbatch",
                 f"{sorted_bam_output} {reference_fasta} {env_variables['JOB_VARIABLES']}",
@@ -263,8 +287,8 @@ def run_pipeline(
 
         #     # SV CALLING
         if not pipeline_config.skip_sv:
-            click.echo(f"\t\t [ ] Submitting SV job (depends on {job_id})")
-            job_id = submit_job(
+            click.echo(f"\t\t [ ] Submitting SV job (depends on {job_id_align})")
+            per_sample_job_id = submit_job(
                 log_out,
                 "9_structural_variant_calling.sbatch",
                 f"{sorted_bam_output} {reference_fasta} {env_variables['JOB_VARIABLES']}",
@@ -275,8 +299,10 @@ def run_pipeline(
 
         #     # METHYLATION
         if not pipeline_config.skip_methylation:
-            click.echo(f"\t\t [ ] Submitting Methylation job (depends on {job_id})")
-            job_id = submit_job(
+            click.echo(
+                f"\t\t [ ] Submitting Methylation job (depends on {job_id_align})"
+            )
+            per_sample_job_id = submit_job(
                 log_out,
                 "10_methylation.sbatch",
                 f"{sorted_bam_output} {reference_fasta} {env_variables['JOB_VARIABLES']}",
@@ -293,8 +319,13 @@ def run_pipeline(
 @click.argument("run_id")
 @click.option(
     "--species",
-    type=click.Choice(["hg38", "mm10", "ferret", "crigri"]),
+    type=click.Choice(["hg38", "mm10", "ferret", "crigri", "chicken"]),
     required=True,
+)
+@click.option(
+    "--methylation",
+    type=str,
+    required=False,
 )
 @click.option(
     "--reference",
@@ -317,11 +348,16 @@ def submit(
     grid_path: str,
     run_id: str,
     species: str,
+    methylation: str,
     reference: tuple[tuple[str, str, str]],
     sample: tuple[tuple[str, str, str, str]],
     pipeline_config: PipelineConfig,
 ):
-    env_variables = setup_env(run_id, species, grid_path, reference, sample)
+    if methylation is None:
+        pipeline_config.skip_methylation = True
+    env_variables = setup_env(
+        run_id, species, grid_path, reference, sample, methylation
+    )
 
     run_pipeline(env_variables, reference, sample, pipeline_config)
 

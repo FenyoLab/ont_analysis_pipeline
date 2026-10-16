@@ -64,7 +64,11 @@ BEDGRAPH_FILE="${SORTED_BAM_FILE%.aligned.sorted.bam}".bed
 
 SAMPLE_TARGET_BED="TARGETS_BED_${SAMPLE_ID}"
 
-INPUT_ANNOTATION="${!SAMPLE_TARGET_BED}"
+if [[ -z "${!SAMPLE_TARGET_BED+x}" ]]; then
+  echo "TARGET BED UNBOUND"
+else
+  INPUT_ANNOTATION="${!SAMPLE_TARGET_BED}"
+fi
 
 
 mkdir -p $TMP_OUT
@@ -98,7 +102,7 @@ bedClip -truncate -verbose=2 $RAW_BEDGRAPH_FILE $CHROM_SIZES $BEDGRAPH_FILE
 echo "Step 2: Converting bedGraph to bigWig..."
 bedGraphToBigWig "$BEDGRAPH_FILE" "$CHROM_SIZES" "$BIGWIG_FILE"
 
-if [[ "$SPECIES" == "mm10" ]] || [[ "$SPECIES" == "hg38" ]]; then
+if [[ ("$SPECIES" == "mm10" || "$SPECIES" == "hg38") && -v INPUT_ANNOTATION ]]; then
   echo "Step 3: Creating chromosome windows..."
   WINDOW_FILE="${TMP_OUT}/${REFERENCE_NAME}.windows.100kb.sort.bed"
   bedtools makewindows \
